@@ -1,0 +1,44 @@
+{
+  "persons": [
+    {
+      "name": "Arto Hellas",
+      "number": "040-123456",
+      "id": "1"
+    },
+    {
+      "name": "Ada Lovelace",
+      "number": "39-44-5323523",
+      "id": "2"
+    },
+    {
+      "name": "Dan Abramov",
+      "number": "12-43-234345",
+      "id": "3"
+    },
+    {
+      "name": "Mary Poppendieck",
+      "number": "39-23-6423122",
+      "id": "4"
+    },
+    {
+      "id": "525b",
+      "name": "Juha Vuorinen",
+      "number": "0505550505"
+    },
+    {
+      "id": "c233",
+      "name": "Anni Saarinen",
+      "number": "0405678901"
+    },
+    {
+      "id": "1f04",
+      "name": "Sanna Korhonen",
+      "number": "46512312"
+    },
+    {
+      "id": "1cf8",
+      "name": "Henna Salo",
+      "number": "56456231"
+    }
+  ]
+}
