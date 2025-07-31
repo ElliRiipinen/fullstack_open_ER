@@ -78,10 +78,17 @@ app.post('/api/persons', (request, response) => {
         number: body.number
     }
     persons = persons.concat(person)
-  response.json(persons)
+  response.json(person)
 })
 
-const PORT = 3001
+const path = require('path')
+
+app.get('*', (request, response) => {
+  response.sendFile(path.join(__dirname, 'build', 'index.html'))
+})
+
+
+const PORT = process.env.PORT || 3001
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
 })
