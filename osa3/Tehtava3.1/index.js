@@ -1,6 +1,8 @@
 const express = require('express')
 const app = express()
+const path = require('path')
 app.use(express.json())
+
 
 const morgan = require('morgan')
 morgan.token('body', (request) => {
@@ -8,7 +10,9 @@ morgan.token('body', (request) => {
 })
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))
 
-app.use(express.static('build'))
+/*Lisätty toiminto */
+app.use(express.static(path.join(__dirname, 'build')))
+
 let persons = [
   {
     id: 1,
@@ -44,7 +48,6 @@ app.get('/api/persons', (request, response) => {
 app.get('/api/persons/:id', (request, response) => {
   const id = Number(request.params.id)
   const person = persons.find(person => person.id === id)
-  
 
   if (person) {
     response.json(person)
@@ -81,11 +84,23 @@ app.post('/api/persons', (request, response) => {
   response.json(person)
 })
 
-const path = require('path')
+app.put('/api/persons/:id', (request, response) => {
+  const id = Number(request.params.id)
+  const body = request.body
 
-app.get('*', (request, response) => {
-  response.sendFile(path.join(__dirname, 'build', 'index.html'))
+  const personIndex = persons.findIndex(p => p.id === id)
+  if (personIndex === -1) {
+    return response.status(404).json({ error: 'person not found' })
+  }
+
+  const updatedPerson = { ...persons[personIndex], number: body.number }
+  persons[personIndex] = updatedPerson
+
+  response.json(updatedPerson)
 })
+
+app.use(express.static('build'))
+
 
 
 const PORT = process.env.PORT || 3001

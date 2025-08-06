@@ -4,7 +4,6 @@ import personService  from './services/persons'
 import Filter from './components/Filter'
 import Form from './components/Form'
 import Persons from './components/Persons'
-import personsService from './services/persons'
 
 const App = () => {
   const [persons, setPersons] = useState([]) 
@@ -55,7 +54,7 @@ const showNotification = (text, type = 'success') => {
 
         const updatedPerson = {...existingPerson, number: newNumber}
 
-        personsService.update(existingPerson.id, updatedPerson).then(returnedPerson => {
+        personService.update(existingPerson.id, updatedPerson).then(returnedPerson => {
           setPersons(persons.map(person =>
           person.id !== existingPerson.id ? person : returnedPerson ))
         setNewName('')
@@ -63,12 +62,15 @@ const showNotification = (text, type = 'success') => {
         showNotification(`Updated number of ${returnedPerson.name}`)
         })
 
-   .catch(error => {
-          alert(`Information of ${newName} has already been removed from server`, 'error')
-          setPersons(persons.filter(p => p.id !== existingPerson.id))
-        })
-    }
+      .catch(error => {
+  showNotification(
+    error.response?.data?.error || `Failed to update ${newName}`, 
+    'error'
+  )
+  setPersons(persons.filter(p => p.id !== existingPerson.id))
+})
 
+      }
     return
   }
 
@@ -78,12 +80,17 @@ const showNotification = (text, type = 'success') => {
       }
       
       personService.create(newPerson).then(returnedPerson =>{
-        setPersons(persons.concat(returnedPerson))
+        setPersons(prevPersons => prevPersons.concat(returnedPerson))
         setNewName('')
         setNewNumber('')
         showNotification(`Added ${returnedPerson.name}`)
       })
-    
+    .catch(error => {
+      showNotification(
+        error.response?.data?.error || 'Failed to add person',
+        'error'
+      )
+    })
   }
 
   const removePerson = (id, name ) => {
