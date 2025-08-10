@@ -2,6 +2,7 @@ const express = require('express')
 const app = express()
 const path = require('path')
 app.use(express.json())
+const Person = require('./models/persons')
 
 
 const morgan = require('morgan')
@@ -10,10 +11,9 @@ morgan.token('body', (request) => {
 })
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))
 
-/*Lisätty toiminto */
 app.use(express.static(path.join(__dirname, 'build')))
 
-let persons = [
+/*let persons = [
   {
     id: 1,
     name: 'Arto Hellas',
@@ -34,69 +34,87 @@ let persons = [
     name: 'Mary Poppendieck',
     number: '39-23-6423122'
   }
-]
+]*/
 
-app.get('/info', (request, response) => {
+app.get('/info', async (request, response) => {
+  try {
+    const count = await Person.countDocuments({})
     const date = new Date()
-  response.send(`<p>Phonebook has info for ${persons.length} people </p> <p>${date}</p>`)
-})
-
-app.get('/api/persons', (request, response) => {
-  response.json(persons)
-})
-
-app.get('/api/persons/:id', (request, response) => {
-  const id = Number(request.params.id)
-  const person = persons.find(person => person.id === id)
-
-  if (person) {
-    response.json(person)
-  } else {
-    response.status(404).end()
+    response.send(`<p>Phonebook has info for ${count} people </p> <p>${date}</p>`)
+  } catch (error) {
+    response.status(500).send('Failed to fetch info')
   }
 })
 
-app.delete('/api/persons/:id', (request, response) => {
-    const id = Number(request.params.id)
-    persons = persons.filter(person => person.id !== id)
-
-  response.status(204).end()
+/*Muokattu hakemaan persons.js tiedostosta tiedot */
+app.get('/api/persons', (request, response) => {
+  Person.find({}).then(persons => {
+    response.json(persons)
+  })
 })
 
-app.post('/api/persons', (request, response) => {
+app.get('/api/persons/:id', async (request, response) => {
+  try {
+    const person = await Person.findById(request.params.id)
+    if (person) {
+      response.json(person)
+    } else {
+      response.status(404).end()
+    }
+  } catch (error) {
+    response.status(500).json({ error: 'Failed to fetch person' })
+  }
+})
+
+app.delete('/api/persons/:id', async (request, response) => {
+  try {
+    await Person.findByIdAndDelete(request.params.id)
+    response.status(204).end()
+  }
+    catch (erros) {
+      response.status(500).json({error: 'Failed to delete person'})
+    }
+})
+
+app.post('/api/persons', async (request, response) => {
     const body = request.body
 
     if (!body.name || !body.number) {
     return response.status(400).json({ error: 'name or number is missing' })
   }
 
-  const nameExists = persons.find(person => person.name === body.name)
+  /*const nameExists = persons.find(person => person.name === body.name)
   if (nameExists) {
+    return response.status(400).json({ error: 'name must be unique' })
+  } VANHA VERSIO*/
+
+  const nameExists = await Person.find({name: body.name})
+  if (nameExists.length > 0) {
     return response.status(400).json({ error: 'name must be unique' })
   }
 
-    const person = {
-        id: Math.floor(Math.random() * 1000000),
-        name : body.name,
+    const person = new Person({
+        name: body.name,
         number: body.number
-    }
-    persons = persons.concat(person)
-  response.json(person)
+    })
+    person.save().then(savedPerson => {
+      response.json(savedPerson)
+    })
 })
 
-app.put('/api/persons/:id', (request, response) => {
-  const id = Number(request.params.id)
-  const body = request.body
+app.put('/api/persons/:id', async (request, response) => {
+  const { number } = request.body
 
-  const personIndex = persons.findIndex(p => p.id === id)
-  if (personIndex === -1) {
-    return response.status(404).json({ error: 'person not found' })
+  try {
+    const updatedPerson = await Person.findByIdAndUpdate(
+      request.params.id,
+      { number },
+      { new: true, runValidators: true, context: 'query' }
+    )
+    response.json(updatedPerson)
+  } catch (error) {
+    response.status(500).json({ error: 'Failed to update person' })
   }
-
-  const updatedPerson = { ...persons[personIndex], number: body.number }
-  persons[personIndex] = updatedPerson
-
-  response.json(updatedPerson)
 })
 
 app.use(express.static('build'))
